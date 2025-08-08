@@ -1,0 +1,19 @@
+﻿.vs/
+bin/
+obj/
+*.user
+*.suo
+
+# Publicaciones locales
+*/Properties/PublishProfiles/
+
+# Logs
+*.log
+
+# Secretos / settings locales
+**/appsettings.json
+**/appsettings.Development.json
+**/appsettings.Local.json
+
+# Mantener solo plantilla
+!**/appsettings.example.json
