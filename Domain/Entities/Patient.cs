@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace Domain.Entities;
 
-internal class Patient
+public class Patient
 {
-  public int PacientId { get; set; }
+  public int PatientId { get; set; }
   public string FirstName { get; set; } = string.Empty;
   public string LastName { get; set; } = string.Empty;
   public string RUT { get; set; } = string.Empty;

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Domain.Entities;
 
-internal class Speciality
+public class Speciality
 {
   public int SpecialityId { get; set; }
   public string Name { get; set; } = string.Empty;

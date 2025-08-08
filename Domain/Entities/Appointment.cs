@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Domain.Entities;
 
-internal class Appointment
+public class Appointment
 {
   public int AppointmentId { get; set; }
   public int PatientId { get; set; }
