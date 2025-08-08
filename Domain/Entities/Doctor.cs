@@ -15,4 +15,5 @@ public class Doctor
   public string? Phone { get; set; }
   public string LicenseNumber { get; set; } = string.Empty;
   public int SpecialityId { get; set; }
+  public string? SpecialityName { get; set; } // Proviene del LeftJoin con Speciality
 }

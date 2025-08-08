@@ -9,6 +9,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSingleton<Persistence.Diagnostics.DbHealthChecker>();
 builder.Services.AddScoped<Persistence.Repositories.PacienteRepository>();
+builder.Services.AddScoped<Persistence.Repositories.DoctorRepository>();
+
 
 // Swagger + ApiKey en UI
 builder.Services.AddSwaggerGen(c =>
