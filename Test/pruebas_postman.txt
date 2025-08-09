@@ -1,0 +1,284 @@
+@host = http://localhost:5051
+@apiKey = GAS236a0as
+
+############################
+# 0) SMOKE
+############################
+### Ping DB
+GET {{host}}/api/db/ping
+X-API-Key: {{apiKey}}
+
+############################
+# 1) PACIENTES
+############################
+### GET by id (Juan)
+GET {{host}}/api/pacientes/1
+X-API-Key: {{apiKey}}
+
+### Search por RUT (Juan)
+GET {{host}}/api/pacientes?rut=12.345.678-9
+X-API-Key: {{apiKey}}
+
+### Search por nombre (contiene)
+GET {{host}}/api/pacientes?name=juan
+X-API-Key: {{apiKey}}
+
+### Search por rango de edad (35 a 40) -> debería traer Juan (35) y Ana (40)
+GET {{host}}/api/pacientes?minAge=35&maxAge=40
+X-API-Key: {{apiKey}}
+
+### CREATE (Pedro)
+POST {{host}}/api/pacientes
+Content-Type: application/json
+X-API-Key: {{apiKey}}
+
+{
+  "firstName": "Pedro",
+  "lastName": "Lagos",
+  "rut": "8.765.432-1",
+  "dateOfBirth": "1995-07-20",
+  "gender": "M",
+  "email": "pedro@test.cl",
+  "phone": "+56 9 7777 8888",
+  "addressLine1": "Calle Falsa 123",
+  "city": "Santiago"
+}
+
+### CREATE duplicado de RUT (mismo Pedro) -> 409 Conflict
+POST {{host}}/api/pacientes
+Content-Type: application/json
+X-API-Key: {{apiKey}}
+
+{
+  "firstName": "Pedro",
+  "lastName": "Lagos",
+  "rut": "8.765.432-1",
+  "dateOfBirth": "1995-07-20",
+  "gender": "M",
+  "email": "otro@test.cl"
+}
+
+### UPDATE (Juan id=1) cambiar email
+PUT {{host}}/api/pacientes/1
+Content-Type: application/json
+X-API-Key: {{apiKey}}
+
+{
+  "pacienteId": 1,
+  "firstName": "Juan",
+  "lastName": "Pérez",
+  "rut": "12.345.678-9",
+  "dateOfBirth": "1990-04-15",
+  "gender": "M",
+  "email": "juan.actualizado@test.cl"
+}
+
+### DELETE (borrar el nuevo Pedro id=3) -> 204
+DELETE {{host}}/api/pacientes/3
+X-API-Key: {{apiKey}}
+
+
+############################
+# 2) ESPECIALIDADES
+############################
+### Listar todas (para ver ids actuales)
+GET {{host}}/api/especialidades
+X-API-Key: {{apiKey}}
+
+### Crear especialidad nueva (OK -> 201)
+POST {{host}}/api/especialidades
+Content-Type: application/json
+X-API-Key: {{apiKey}}
+
+{ "name": "Neurología", "description": "SN central y periférico" }
+
+### Obtener por Id (ajusta el id que devolvió el POST anterior)
+GET {{host}}/api/especialidades/3
+X-API-Key: {{apiKey}}
+
+### Actualizar (OK -> 200)
+PUT {{host}}/api/especialidades/3
+Content-Type: application/json
+X-API-Key: {{apiKey}}
+
+{ "name": "Neurología Adulto", "description": "Neurología en adultos" }
+
+### Eliminar una especialidad SIN doctores asociados (OK -> 204)
+DELETE {{host}}/api/especialidades/3
+X-API-Key: {{apiKey}}
+
+### Intentar eliminar una especialidad CON doctores asociados (espera 400/409 según mapeo)
+# Por ejemplo, si 1 = Cardiología y hay doctores con SpecialityId=1
+DELETE {{host}}/api/especialidades/1
+X-API-Key: {{apiKey}}
+
+
+############################
+# 3) DOCTORES (CRUD + validaciones)
+############################
+### Buscar por nombre (contiene) -> 200
+GET {{host}}/api/doctores?name=ale
+X-API-Key: {{apiKey}}
+
+### Buscar por especialidad -> 200
+GET {{host}}/api/doctores?specialityId=1
+X-API-Key: {{apiKey}}
+
+### Obtener por Id 1 -> 200
+GET {{host}}/api/doctores/1
+X-API-Key: {{apiKey}}
+
+### Crear doctor nuevo (OK -> 201)
+POST {{host}}/api/doctores
+Content-Type: application/json
+X-API-Key: {{apiKey}}
+
+{
+  "firstName": "Carlos",
+  "lastName": "Ruiz",
+  "email": "carlos@clinic.cl",
+  "phone": "+56 9 4444 5555",
+  "licenseNumber": "MED-3003",
+  "specialityId": 1
+}
+
+### Crear doctor con LicenseNumber duplicado (espera 409)
+POST {{host}}/api/doctores
+Content-Type: application/json
+X-API-Key: {{apiKey}}
+
+{
+  "firstName": "Duplicado",
+  "lastName": "Prueba",
+  "email": "dup@clinic.cl",
+  "phone": "+56 9 0000 0000",
+  "licenseNumber": "MED-3003",
+  "specialityId": 1
+}
+
+### Actualizar doctor existente (OK -> 200)
+PUT {{host}}/api/doctores/1
+Content-Type: application/json
+X-API-Key: {{apiKey}}
+
+{
+  "doctorId": 1,
+  "firstName": "Alejandro",
+  "lastName": "González",
+  "email": "alejandro@clinic.cl",
+  "phone": "+56 9 1111 2222",
+  "licenseNumber": "MED-1001",
+  "specialityId": 1
+}
+
+### Eliminar doctor que NO exista (espera 404)
+DELETE {{host}}/api/doctores/9999
+X-API-Key: {{apiKey}}
+
+
+############################
+# 4) ATENCIONES (Insert + Search + Promedio)
+############################
+# NOTA: en tu DB actual (según seed que usamos):
+#   PatientId: 1 Juan, 2 Ana
+#   DoctorId : 1 Alejandro (Spec 1), 2 Beatriz (Spec 2)
+
+### Crear atención válida (OK -> 201)
+POST {{host}}/api/atenciones
+Content-Type: application/json
+X-API-Key: {{apiKey}}
+
+{
+  "patientId": 1,
+  "doctorId": 1,
+  "startUtc": "2025-08-10T09:00:00Z",
+  "endUtc":   "2025-08-10T09:30:00Z",
+  "diagnosis": "Control presión",
+  "room": "101",
+  "status": "Scheduled"
+}
+
+### Crear atención con solapamiento (espera 409)
+# Debe chocar con la franja 09:00-09:30Z del mismo doctorId=1
+POST {{host}}/api/atenciones
+Content-Type: application/json
+X-API-Key: {{apiKey}}
+
+{
+  "patientId": 2,
+  "doctorId": 1,
+  "startUtc": "2025-08-10T09:10:00Z",
+  "endUtc":   "2025-08-10T09:20:00Z",
+  "diagnosis": "Prueba solape",
+  "room": "101",
+  "status": "Scheduled"
+}
+
+### Crear atención con fin <= inicio (espera 400)
+POST {{host}}/api/atenciones
+Content-Type: application/json
+X-API-Key: {{apiKey}}
+
+{
+  "patientId": 1,
+  "doctorId": 1,
+  "startUtc": "2025-08-11T10:00:00Z",
+  "endUtc":   "2025-08-11T09:59:00Z",
+  "diagnosis": "Error de rango",
+  "room": "101",
+  "status": "Scheduled"
+}
+
+### Crear atención con paciente inexistente (espera 404)
+POST {{host}}/api/atenciones
+Content-Type: application/json
+X-API-Key: {{apiKey}}
+
+{
+  "patientId": 9999,
+  "doctorId": 1,
+  "startUtc": "2025-08-12T10:00:00Z",
+  "endUtc":   "2025-08-12T10:20:00Z",
+  "diagnosis": "Paciente no existe",
+  "room": "101",
+  "status": "Scheduled"
+}
+
+### Crear atención con doctor inexistente (espera 404)
+POST {{host}}/api/atenciones
+Content-Type: application/json
+X-API-Key: {{apiKey}}
+
+{
+  "patientId": 1,
+  "doctorId": 9999,
+  "startUtc": "2025-08-13T10:00:00Z",
+  "endUtc":   "2025-08-13T10:20:00Z",
+  "diagnosis": "Doctor no existe",
+  "room": "101",
+  "status": "Scheduled"
+}
+
+### Buscar por rango de fecha (día 2025-08-10)
+GET {{host}}/api/atenciones?fromUtc=2025-08-10T00:00:00Z&toUtc=2025-08-10T23:59:59Z
+X-API-Key: {{apiKey}}
+
+### Buscar por doctor (1)
+GET {{host}}/api/atenciones?doctorId=1
+X-API-Key: {{apiKey}}
+
+### Buscar por paciente (1)
+GET {{host}}/api/atenciones?patientId=1
+X-API-Key: {{apiKey}}
+
+### Buscar por especialidad (1 = Cardiología, doctores de esa especialidad)
+GET {{host}}/api/atenciones?specialityId=1
+X-API-Key: {{apiKey}}
+
+### Promedio por especialidad (todas)
+GET {{host}}/api/atenciones/avg
+X-API-Key: {{apiKey}}
+
+### Promedio solo una especialidad (1)
+GET {{host}}/api/atenciones/avg?specialityId=1
+X-API-Key: {{apiKey}}
