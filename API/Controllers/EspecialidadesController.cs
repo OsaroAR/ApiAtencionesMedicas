@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using Persistence.Repositories;
 
 namespace API.Controllers;
@@ -40,8 +41,24 @@ public class EspecialidadesController : ControllerBase
   [HttpDelete("{id:int}")]
   public async Task<IActionResult> Delete(int id)
   {
-    var affected = await _repo.DeleteAsync(id);
-    return affected == 0 ? NotFound() : NoContent();
+    try
+    {
+      var affected = await _repo.DeleteAsync(id);
+      return affected == 0 ? NotFound() : NoContent();
+    }
+    catch (KeyNotFoundException ex)
+    {
+      return NotFound(new { error = ex.Message });
+    }
+    catch (InvalidOperationException ex)
+    {
+      // doctores asociados / FK → 409
+      return Conflict(new { error = ex.Message });
+    }
+    catch (SqlException ex)
+    {
+      return Problem("Error SQL al eliminar especialidad", ex.Message, 500);
+    }
   }
 
   public record SpecialityDto(string Name, string? Description);

@@ -17,3 +17,5 @@ obj/
 
 # Mantener solo plantilla
 !**/appsettings.example.json
+/Scripts
+/Test

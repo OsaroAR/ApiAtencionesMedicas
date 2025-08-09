@@ -1,11 +1,12 @@
-﻿using System;
+﻿using Application.Common.Interfaces;
+using Dapper;
+using Microsoft.Data.SqlClient;
+using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Data;
-using Application.Common.Interfaces;
-using Dapper;
 
 namespace Persistence.Repositories;
 
@@ -47,10 +48,28 @@ public class SpecialityRepository
     var prm = new DynamicParameters();
     prm.Add("@SpecialityId", id);
 
-    var affected = await conn.ExecuteScalarAsync<int>(
-        "dbo.Speciality_Delete", prm, commandType: CommandType.StoredProcedure);
-    return affected;
+    try
+    {
+      var affected = await conn.ExecuteScalarAsync<int>(
+          "dbo.Speciality_Delete", prm, commandType: CommandType.StoredProcedure);
+      return affected; // 1 si borró, 0 si no (aunque nuestro SP no devuelve 0)
+    }
+    catch (SqlException ex)
+    {
+      switch (ex.State)
+      {
+        case 1: // no encontrada
+          throw new KeyNotFoundException("Especialidad no encontrada.", ex);
+        case 2: // doctores asociados
+          throw new InvalidOperationException("No se puede eliminar: existen doctores asociados.", ex);
+        default:
+          if (ex.Number == 547) // FK
+            throw new InvalidOperationException("No se puede eliminar: la especialidad tiene dependencias (FK).", ex);
+          throw;
+      }
+    }
   }
+
 
   public async Task<object?> GetByIdAsync(int id)
   {

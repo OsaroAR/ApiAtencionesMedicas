@@ -16,7 +16,7 @@ public class PacientesController(PacienteRepository repo) : ControllerBase
     return p is null ? NotFound() : Ok(p);
   }
 
-  // /api/pacientes?rut=xxx&name=juan&minAge=20&maxAge=40
+  
   [HttpGet]
   public async Task<IActionResult> Search([FromQuery] string? rut, [FromQuery] string? name,
                                           [FromQuery] int? minAge, [FromQuery] int? maxAge)

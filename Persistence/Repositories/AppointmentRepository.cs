@@ -41,27 +41,27 @@ public class AppointmentRepository
     {
       switch (ex.State)
       {
-        case 2: // EndUtc <= StartUtc
+        case 1: // EndUtc <= StartUtc
           {
             var e = new ArgumentException("La hora de término debe ser mayor que la de inicio.", nameof(a.EndUtc), ex);
             e.Data["SqlState"] = 1;
             throw e;
           }
-        case 3: // Paciente no encontrado
+        case 2: // Paciente no encontrado
           {
             var e = new KeyNotFoundException("Paciente no encontrado.", ex);
             e.Data["SqlState"] = 2;
             throw e;
           }
-        case 4: // Doctor no encontrado
+        case 3: // Doctor no encontrado
           {
             var e = new KeyNotFoundException("Doctor no encontrado.", ex);
             e.Data["SqlState"] = 3;
             throw e;
           }
-        case 5: // Solapamiento
+        case 4: // Solapamiento
           {
-            var e = new InvalidOperationException("El doctor ya tiene una atención en ese horario (solapamiento).", ex);
+            var e = new InvalidOperationException("El doctor ya tiene una atención en ese horario.", ex);
             e.Data["SqlState"] = 4;
             throw e;
           }
@@ -90,8 +90,7 @@ public class AppointmentRepository
     prm.Add("@DoctorId", doctorId);
     prm.Add("@PatientId", patientId);
     prm.Add("@SpecialityId", specialityId);
-    prm.Add("@Status", status);
-
+    
     var list = await conn.QueryAsync<AppointmentSearchResult>(
         "dbo.Appointment_Search", prm, commandType: CommandType.StoredProcedure);
 
@@ -111,4 +110,17 @@ public class AppointmentRepository
 
     return list;
   }
+
+  public async Task<AppointmentSearchResult?> GetByIdAsync(int id)
+  {
+    using var conn = _factory.CreateConnection();
+    var prm = new DynamicParameters();
+    prm.Add("@AppointmentId", id);
+
+    var item = await conn.QuerySingleOrDefaultAsync<AppointmentSearchResult>(
+        "dbo.Appointment_GetById", prm, commandType: CommandType.StoredProcedure);
+
+    return item;
+  }
+
 }

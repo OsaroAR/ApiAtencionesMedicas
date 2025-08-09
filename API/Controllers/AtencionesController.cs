@@ -21,7 +21,7 @@ public class AtencionesController : ControllerBase
     {
       var id = await _repo.CreateAsync(a, "api");
       a.AppointmentId = id;
-      return CreatedAtAction(nameof(GetPlaceholder), new { id }, a);
+      return CreatedAtAction(nameof(GetById), new { id }, a);
     }
     catch (ArgumentException ex) // State = 2 (End <= Start)
     {
@@ -74,7 +74,11 @@ public class AtencionesController : ControllerBase
     return Ok(list);
   }
 
-  // Placeholder para CreatedAtAction (si no tienes GET por id)
-  [NonAction]
-  public IActionResult GetPlaceholder(int id) => NoContent();
+  [HttpGet("{id:int}")]
+  public async Task<IActionResult> GetById(int id)
+  {
+    var item = await _repo.GetByIdAsync(id);
+    return item is null ? NotFound() : Ok(item);
+  }
+
 }
